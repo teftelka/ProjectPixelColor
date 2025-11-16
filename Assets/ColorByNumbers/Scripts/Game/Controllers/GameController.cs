@@ -387,6 +387,83 @@ namespace BBG.ColorByNumbers
 			}
 		}
 
+		public bool IsAbleToColorArea(Vector2 startScreen, Vector2 endScreen, bool mustMatchSelectedColor = true)
+		{
+			// === Экран -> локальные координаты полотна ===
+		    Vector2 localA, localB;
+		    RectTransformUtility.ScreenPointToLocalPointInRectangle(pictureContentArea, startScreen, null, out localA);
+		    RectTransformUtility.ScreenPointToLocalPointInRectangle(pictureContentArea, endScreen,   null, out localB);
+
+		    Vector2 contentSize = new Vector2(pictureContentArea.rect.width, pictureContentArea.rect.height);
+		    localA += contentSize * 0.5f;
+		    localB += contentSize * 0.5f;
+
+		    Vector2 minL = Vector2.Min(localA, localB);
+		    Vector2 maxL = Vector2.Max(localA, localB);
+		    minL = Vector2.Max(minL, Vector2.zero);
+		    maxL = Vector2.Min(maxL, contentSize);
+		    if (maxL.x <= minL.x || maxL.y <= minL.y) return false;
+
+		    const float eps = 0.001f;
+		    int xMin, yMin, xMax, yMax;
+		    CalculateCellFromPosition(minL + new Vector2(eps, eps), contentSize, out xMin, out yMin);
+		    CalculateCellFromPosition(maxL - new Vector2(eps, eps), contentSize, out xMax, out yMax);
+
+		    xMin = Mathf.Clamp(xMin, 0, ActivePictureInfo.ColorNumbers[0].Count - 1);
+		    xMax = Mathf.Clamp(xMax, 0, ActivePictureInfo.ColorNumbers[0].Count - 1);
+		    yMin = Mathf.Clamp(yMin, 0, ActivePictureInfo.ColorNumbers.Count - 1);
+		    yMax = Mathf.Clamp(yMax, 0, ActivePictureInfo.ColorNumbers.Count - 1);
+
+		    // === 1-я проходка: проверяем однородность среди НЕЗАКРАШЕННЫХ клеток ===
+		    int foundColor = int.MinValue; // целевая цифра незакрашенных клеток в выделении
+		    bool hasUnpainted = false;
+
+		    for (int y = yMin; y <= yMax; y++)
+		    {
+		        for (int x = xMin; x <= xMax; x++)
+		        {
+		            int num = ActivePictureInfo.ColorNumbers[y][x];
+		            if (num == -1) continue; // фон не красим
+
+		            bool alreadyPainted = ActivePictureInfo.Progress[y][x] == -1;
+		            if (alreadyPainted) continue; // уже закрашенные игнорим в проверке
+
+		            if (!hasUnpainted)
+		            {
+		                foundColor = num;
+		                hasUnpainted = true;
+		            }
+		            else if (num != foundColor)
+		            {
+		                // среди НЕЗАКРАШЕННЫХ встретились разные цифры — отменяем
+		                return false;
+		            }
+		        }
+		    }
+
+		    // Внутри нет незакрашенных подходящих клеток — делать нечего
+		    if (!hasUnpainted) return false;
+
+		    // Можно требовать совпадение с выбранным цветом
+		    if (mustMatchSelectedColor && foundColor != selectedColorIndex)
+		        return false;
+
+		    // === 2-я проходка: красим только незакрашенные клетки с нужной цифрой ===
+		    /*for (int y = yMin; y <= yMax; y++)
+		    {
+		        for (int x = xMin; x <= xMax; x++)
+		        {
+		            if (ActivePictureInfo.ColorNumbers[y][x] == foundColor &&
+		                ActivePictureInfo.Progress[y][x] != -1) // не трогаем уже закрашенные
+		            {
+		                ColorCell(x, y, selectedColorIndex, startScreen);
+		            }
+		        }
+		    }*/
+
+		    return true;
+		}
+
 		#endregion
 
 		#region Private Methods
