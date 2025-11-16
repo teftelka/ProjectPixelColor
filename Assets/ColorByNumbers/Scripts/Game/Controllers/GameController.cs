@@ -150,6 +150,12 @@ namespace BBG.ColorByNumbers
 		private ColorNumbersText	magnifyingColorNumbersText;
 		private Transform			magnifyingGlassGridLineContainer;
 		private List<RectTransform>	magnifyingGlassGridLines;
+		
+		private HashSet<int> unlockedRegions = new HashSet<int>();
+
+// оверлей, который будет закрывать недоступные регионы
+		private RawImage regionOverlayImage;
+		private Texture2D regionOverlayTexture;
 
 		#endregion
 
@@ -308,6 +314,7 @@ namespace BBG.ColorByNumbers
 
 			// Set the active level
 			ActivePictureInfo = pictureInfo;
+			unlockedRegions = new HashSet<int> { 0 };
 
 			// Setup the game
 			SetupLevel(pictureInfo);
@@ -468,6 +475,57 @@ namespace BBG.ColorByNumbers
 
 		#region Private Methods
 
+		private void UpdateRegionOverlayTexture()
+		{
+			if (ActivePictureInfo == null || ActivePictureInfo.RegionIds == null)
+				return;
+
+			int width  = ActivePictureInfo.XCells;
+			int height = ActivePictureInfo.YCells;
+
+			if (regionOverlayTexture == null ||
+			    regionOverlayTexture.width != width ||
+			    regionOverlayTexture.height != height)
+			{
+				regionOverlayTexture = new Texture2D(width, height, TextureFormat.ARGB32, false);
+				regionOverlayTexture.filterMode = FilterMode.Point;
+				regionOverlayImage.texture = regionOverlayTexture;
+			}
+
+			for (int y = 0; y < height; y++)
+			{
+				for (int x = 0; x < width; x++)
+				{
+					int colorNumber = ActivePictureInfo.ColorNumbers[y][x];
+
+					// фон не рисуем
+					if (colorNumber == -1)
+					{
+						regionOverlayTexture.SetPixel(x, y, new Color(0, 0, 0, 0));
+						continue;
+					}
+
+					int regionId = ActivePictureInfo.RegionIds[y][x];
+
+					bool isUnlocked = regionId >= 0 && unlockedRegions.Contains(regionId);
+
+					if (isUnlocked)
+					{
+						// доступная зона — прозрачная
+						regionOverlayTexture.SetPixel(x, y, new Color(0, 0, 0, 0));
+					}
+					else
+					{
+						// закрытая зона — затемняем/маскируем
+						// можно сделать полупрозрачный чёрный, чтобы чуть видно было
+						regionOverlayTexture.SetPixel(x, y, new Color(255, 255, 255, 1f));
+					}
+				}
+			}
+
+			regionOverlayTexture.Apply();
+		}
+		
 		/// <summary>
 		/// Called when a PictureListItem is clicked
 		/// </summary>
@@ -542,6 +600,8 @@ namespace BBG.ColorByNumbers
 			grayscaleImage.texture	= GrayscaleTexture;
 			coloredImage.texture	= ColoredTexture;
 			grayscaleImage.color	= Color.white;
+			
+			UpdateRegionOverlayTexture();
 
 			// Setup the list of colors at the bottom of the screen
 			colorPaletteList.SetupPaletteList(pictureInfo);
@@ -1385,6 +1445,12 @@ namespace BBG.ColorByNumbers
 			gridLineContainer		= CreateContainerObj("grid_lines", pictureContentArea).AddComponent<CanvasGroup>();
 			coloredImage			= CreateContainerObj("colored_texture", pictureContentArea).AddComponent<RawImage>();
 			colorNumbersText		= CreateColorNumbersText(pictureContentArea);
+// НОВОЕ: оверлей регионов
+			regionOverlayImage      = CreateContainerObj("region_overlay", pictureContentArea).AddComponent<RawImage>();
+			regionOverlayImage.raycastTarget = false; // чтобы не мешал кликам
+			regionOverlayImage.color = Color.white;   // цвет берём из текстуры
+			regionOverlayImage.transform.SetAsLastSibling();
+			
 		}
 
 		/// <summary>
