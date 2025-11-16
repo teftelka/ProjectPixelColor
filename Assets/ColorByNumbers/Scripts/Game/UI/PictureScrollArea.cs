@@ -367,6 +367,7 @@ namespace BBG.ColorByNumbers
 				}
 			}
 		}
+		
 
 		public void SetImageColor(bool isCorrect)
 		{
