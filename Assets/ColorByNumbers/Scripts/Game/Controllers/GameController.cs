@@ -431,6 +431,9 @@ namespace BBG.ColorByNumbers
 		        {
 		            int num = ActivePictureInfo.ColorNumbers[y][x];
 		            if (num == -1) continue; // фон не красим
+		            
+		            if (!IsCellInUnlockedRegion(x, y))
+			            continue;
 
 		            bool alreadyPainted = ActivePictureInfo.Progress[y][x] == -1;
 		            if (alreadyPainted) continue; // уже закрашенные игнорим в проверке
@@ -824,6 +827,17 @@ namespace BBG.ColorByNumbers
 				PopupManager.Instance.Show("level_complete_popup", popupData, null);
 			}
 		}
+		
+		private bool IsCellInUnlockedRegion(int xCell, int yCell)
+		{
+			// фон всё равно не красим
+			if (ActivePictureInfo.ColorNumbers[yCell][xCell] == -1)
+				return false;
+
+			int regionId = ActivePictureInfo.RegionIds[yCell][xCell];
+			return regionId >= 0 && unlockedRegions.Contains(regionId);
+		}
+		
 
 		/// <summary>
 		/// Updates the numbers and grid lines, called whenever the picture area is moved / zoomed
@@ -1030,6 +1044,10 @@ namespace BBG.ColorByNumbers
 		        {
 		            int num = ActivePictureInfo.ColorNumbers[y][x];
 		            if (num == -1) continue; // фон не красим
+		            
+		            // НОВОЕ: полностью игнорируем закрытые регионы
+		            if (!IsCellInUnlockedRegion(x, y))
+			            continue;
 
 		            bool alreadyPainted = ActivePictureInfo.Progress[y][x] == -1;
 		            if (alreadyPainted) continue; // уже закрашенные игнорим в проверке
@@ -1059,14 +1077,19 @@ namespace BBG.ColorByNumbers
 		    {
 		        for (int x = xMin; x <= xMax; x++)
 		        {
-		            if (ActivePictureInfo.ColorNumbers[y][x] == foundColor &&
-		                ActivePictureInfo.Progress[y][x] != -1) // не трогаем уже закрашенные
-		            {
+			        if (ActivePictureInfo.ColorNumbers[y][x] == foundColor &&
+			            ActivePictureInfo.Progress[y][x] != -1 &&        // не трогаем уже закрашенные
+			            IsCellInUnlockedRegion(x, y))
+			        {
 		                ColorCell(x, y, selectedColorIndex, startScreen);
 		            }
 		        }
 		    }
-
+		    if (unlockedRegions.Count < 8)
+		    {
+			    unlockedRegions.Add(unlockedRegions.Count);
+			    UpdateRegionOverlayTexture();
+		    }
 		    SetSelectedPowerUp(PowerUp.None);
 		    colorPaletteList.UpdateCompleted();
 		    CheckCompleted();
@@ -1180,7 +1203,8 @@ namespace BBG.ColorByNumbers
 				CalculateCellFromPosition(localPosition, contentSize, out xCell, out yCell);
 
 				//ПРОВЕРЯЕМ МОЖНО ЛИ ЭТУ КЛЕТКУ ЗАКРАШИВАТЬ (-1 ЭТО ФОН)
-				if (ActivePictureInfo.ColorNumbers[yCell][xCell] != -1)
+				if (ActivePictureInfo.ColorNumbers[yCell][xCell] != -1 &&
+				    IsCellInUnlockedRegion(xCell, yCell))
 				{
 					switch (selectedPowerUp)
 					{
