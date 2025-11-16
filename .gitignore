@@ -1,0 +1,19 @@
+# Unity
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild*/
+[Ll]ogs/
+UserSettings/
+MemoryCaptures/
+Artifacts/
+# IDE / OS
+.vs/
+.idea/
+*.sln
+*.csproj
+*.user
+.DS_Store
+Thumbs.db
+# Package cache
+Packages/PackageCache/
