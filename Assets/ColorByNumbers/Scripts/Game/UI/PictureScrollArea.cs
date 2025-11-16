@@ -236,6 +236,14 @@ namespace BBG.ColorByNumbers
 		void UpdateBox(Vector2 currentScreen)
 		{
 			if (!selectionBox || !canvas) return;
+			SetImageColor(true);
+
+			var a = GameController.Instance.IsAbleToColorArea(startPosition, currentScreen);
+			Debug.LogWarning(a);
+			if (!a)
+			{
+				SetImageColor(false);
+			}
 
 			// нормализуем прямоугольник в экранных координатах
 			Vector2 min = Vector2.Min(startPosition, currentScreen);
@@ -364,12 +372,11 @@ namespace BBG.ColorByNumbers
 		{
 			if (isCorrect)
 			{
-				selectionBox.GetComponent<Image>().color = Color.blue;
-				selectionBox.GetComponent<Image>().alphaHitTestMinimumThreshold = 0.5f;
+				selectionBox.GetComponent<Image>().color = new Color32(0, 120, 255, 60);
 			}
 			else
 			{
-				selectionBox.GetComponent<Image>().color = Color.red;
+				selectionBox.GetComponent<Image>().color = new Color32(255, 0, 0, 60);
 			}
 			
 		}

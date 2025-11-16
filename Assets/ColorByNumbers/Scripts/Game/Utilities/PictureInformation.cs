@@ -406,7 +406,6 @@ namespace BBG.ColorByNumbers
 				LoadPictureFile();
 			}
 			
-			Debug.LogWarning("HERE");
 
 			progress	= new List<List<int>>();
 			colorsLeft	= new List<int>();
