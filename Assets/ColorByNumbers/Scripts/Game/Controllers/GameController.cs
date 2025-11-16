@@ -442,6 +442,7 @@ namespace BBG.ColorByNumbers
 		            {
 		                foundColor = num;
 		                hasUnpainted = true;
+		                
 		            }
 		            else if (num != foundColor)
 		            {
@@ -452,24 +453,11 @@ namespace BBG.ColorByNumbers
 		    }
 
 		    // Внутри нет незакрашенных подходящих клеток — делать нечего
-		    if (!hasUnpainted) return false;
+		    if (!hasUnpainted) return true;
 
 		    // Можно требовать совпадение с выбранным цветом
 		    if (mustMatchSelectedColor && foundColor != selectedColorIndex)
 		        return false;
-
-		    // === 2-я проходка: красим только незакрашенные клетки с нужной цифрой ===
-		    /*for (int y = yMin; y <= yMax; y++)
-		    {
-		        for (int x = xMin; x <= xMax; x++)
-		        {
-		            if (ActivePictureInfo.ColorNumbers[y][x] == foundColor &&
-		                ActivePictureInfo.Progress[y][x] != -1) // не трогаем уже закрашенные
-		            {
-		                ColorCell(x, y, selectedColorIndex, startScreen);
-		            }
-		        }
-		    }*/
 
 		    return true;
 		}
