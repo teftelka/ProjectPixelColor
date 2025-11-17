@@ -239,7 +239,7 @@ namespace BBG.ColorByNumbers
 			SetImageColor(true);
 
 			var a = GameController.Instance.IsAbleToColorArea(startPosition, currentScreen);
-			Debug.LogWarning(a);
+
 			if (!a)
 			{
 				SetImageColor(false);

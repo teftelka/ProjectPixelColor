@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -24,6 +25,7 @@ namespace BBG.ColorByNumbers
 		private bool			awardOnComplete;
 		private int				awardAmount;
 		private List<List<int>> regionIds;
+		//private int colorsCount;
 
 		// Saved matrix of color numbers, -1 means it's colored in, number >= 0 means it still needs to be colored
 		private List<List<int>>	progress;
@@ -61,9 +63,9 @@ namespace BBG.ColorByNumbers
 		{
 			get
 			{
-				if (regionIds == null)
+				if (!isFileLoaded)
 				{
-					GenerateRegions(8); // делим на 8 частей по умолчанию
+					LoadPictureFile();
 				}
 
 				return regionIds;
@@ -563,13 +565,18 @@ namespace BBG.ColorByNumbers
 			}
 
 			index += yCells;
+
+			//var colorsCount = Convert.ToInt32(lines[index][0]);
+			var colorsCount = 11;
+
+			index++;
 			
 
 			// Get the list of colors in the picture
 			colors = new List<Color>();
 			startPaintAmount = new List<int>();
 
-			for (int i = index; i < lines.Count; i++)
+			for (int i = index; i < index + colorsCount; i++)
 			{
 				float r, g, b;
 
@@ -598,87 +605,46 @@ namespace BBG.ColorByNumbers
 					//Debug.LogError("colors count mismatch");
 				}
 			}
-			GenerateRegions(8);
+			
+			index += colorsCount;
+
+			// Get a list of integers that represent what regions MINE
+			regionIds = new List<List<int>>();
+
+			for (int i = index; i < yCells + index; i++)
+			{
+				if (i >= lines.Count)
+				{
+					Debug.LogError("[PictureInformation] ParsePictureFile: Malformed file contents, no enough lines when parse color numbers.");
+
+					return;
+				}
+
+				regionIds.Add(new List<int>());
+
+				for (int j = 0; j < xCells; j++)
+				{
+					int number;
+
+					if (!ParseInt(lines[i], j, out number))
+					{
+						Debug.LogWarning(lines[i][0]);
+						Debug.LogError("[PictureInformation] ParsePictureFile: Malformed file contents, could not parse color number.");
+
+						return;
+					}
+					
+
+					regionIds[i - index].Add(number);
+				}
+			}
+
+			//GenerateRegions(8);
 			
 			isIdLoaded		= true;
 			isFileLoaded	= true;
 		}
 		
-		/// <summary>
-		/// Делит картинку на regionsCount горизонтальных "поясов" (регионов).
-		/// Фон (ColorNumbers == -1) получает RegionId = -1.
-		/// </summary>
-		private void GenerateRegions(int regionsCount)
-		{
-			if (colorNumbers == null || colorNumbers.Count == 0)
-			{
-				return;
-			}
-
-			int height = yCells; // colorNumbers.Count
-			int width  = xCells; // colorNumbers[0].Count
-
-			// Инициализируем матрицу регионов значением -1
-			regionIds = new List<List<int>>(height);
-
-			for (int y = 0; y < height; y++)
-			{
-				regionIds.Add(new List<int>(width));
-				for (int x = 0; x < width; x++)
-				{
-					regionIds[y].Add(-1);
-				}
-			}
-
-			// 1) Находим диапазон строк, где есть "живые" клетки (ColorNumbers != -1)
-			int minY = height;
-			int maxY = -1;
-
-			for (int y = 0; y < height; y++)
-			{
-				for (int x = 0; x < width; x++)
-				{
-					if (colorNumbers[y][x] != -1)
-					{
-						if (y < minY) minY = y;
-						if (y > maxY) maxY = y;
-					}
-				}
-			}
-
-			// Если вообще нет ни одной клетки — выходим
-			if (maxY < minY)
-			{
-				return;
-			}
-
-			int totalRows  = maxY - minY + 1;
-			float bandHeight = (float)totalRows / regionsCount;
-
-			// 2) Разбиваем диапазон [minY..maxY] на regionsCount горизонтальных полос
-			for (int y = minY; y <= maxY; y++)
-			{
-				int bandIndex = (int)((y - minY) / bandHeight);
-				if (bandIndex >= regionsCount)
-				{
-					bandIndex = regionsCount - 1; // страховка для последней строки
-				}
-
-				for (int x = 0; x < width; x++)
-				{
-					if (colorNumbers[y][x] != -1)
-					{
-						regionIds[y][x] = bandIndex;
-					}
-					else
-					{
-						regionIds[y][x] = -1; // фон
-					}
-				}
-			}
-		}
-
-
 		/// <summary>
 		/// Parses the CSV file and seperate the lines
 		/// </summary>
@@ -699,7 +665,7 @@ namespace BBG.ColorByNumbers
 
 			return lines;
 		}
-
+		
 		/// <summary>
 		/// Helper method that converts a string at the given index into an integer, returns false if it fails
 		/// </summary>
