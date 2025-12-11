@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 using Coffee.UIExtensions;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using Random = System.Random;
 
@@ -121,6 +122,7 @@ namespace BBG.ColorByNumbers
 		
 		
 		[SerializeField] private GameObject particleSystem;
+		[SerializeField] private Button buttonOpenArea;
 
 		#endregion
 
@@ -1073,99 +1075,21 @@ namespace BBG.ColorByNumbers
 		            }
 		        }
 		    }
-		    if (unlockedRegions.Count < 8)
-		    {
-			    unlockedRegions.Add(unlockedRegions.Count);
-			    UpdateRegionOverlayTexture();
-		    }
+
 		    SetSelectedPowerUp(PowerUp.None);
 		    colorPaletteList.UpdateCompleted();
 		    CheckCompleted();
 		}
 
-
-		
-				/// Закрашивает клетки внутри прямоугольника, НО только если
-		/// все (≠ -1) клетки внутри имеют одну и ту же цифру.
-		/// Если встречаются разные цифры — покраска не выполняется.
-		public void ColorAreaOLD(Vector2 startScreen, Vector2 endScreen, bool mustMatchSelectedColor = true)
+		public void OnButtonOpenAreaClick()
 		{
-		    // ===== 1) Экран -> локальные координаты полотна =====
-		    Vector2 localA, localB;
-		    RectTransformUtility.ScreenPointToLocalPointInRectangle(pictureContentArea, startScreen, null, out localA);
-		    RectTransformUtility.ScreenPointToLocalPointInRectangle(pictureContentArea, endScreen,   null, out localB);
-
-		    Vector2 contentSize = new Vector2(pictureContentArea.rect.width, pictureContentArea.rect.height);
-		    localA += contentSize * 0.5f;
-		    localB += contentSize * 0.5f;
-
-		    Vector2 minL = Vector2.Min(localA, localB);
-		    Vector2 maxL = Vector2.Max(localA, localB);
-		    minL = Vector2.Max(minL, Vector2.zero);
-		    maxL = Vector2.Min(maxL, contentSize);
-		    if (maxL.x <= minL.x || maxL.y <= minL.y) return;
-
-		    const float eps = 0.001f;
-		    int xMin, yMin, xMax, yMax;
-		    CalculateCellFromPosition(minL + new Vector2(eps, eps), contentSize, out xMin, out yMin);
-		    CalculateCellFromPosition(maxL - new Vector2(eps, eps), contentSize, out xMax, out yMax);
-
-		    xMin = Mathf.Clamp(xMin, 0, ActivePictureInfo.ColorNumbers[0].Count - 1);
-		    xMax = Mathf.Clamp(xMax, 0, ActivePictureInfo.ColorNumbers[0].Count - 1);
-		    yMin = Mathf.Clamp(yMin, 0, ActivePictureInfo.ColorNumbers.Count - 1);
-		    yMax = Mathf.Clamp(yMax, 0, ActivePictureInfo.ColorNumbers.Count - 1);
-
-		    // ===== 2) Первая проходка: проверяем однородность цифры =====
-		    int foundColor = int.MinValue;   // цифра (цвет) внутри выделения
-		    bool hasPaintable = false;       // есть ли вообще клетки ≠ -1
-
-		    for (int y = yMin; y <= yMax; y++)
-		    {
-		        for (int x = xMin; x <= xMax; x++)
-		        {
-		            int n = ActivePictureInfo.ColorNumbers[y][x];
-		            if (n == -1) continue; // фон пропускаем
-
-		            if (!hasPaintable)
-		            {
-		                foundColor = n;
-		                hasPaintable = true;
-		            }
-		            else if (n != foundColor)
-		            {
-		                // внутри выделения встретились разные цифры — отменяем покраску
-		                return;
-		            }
-		        }
-		    }
-
-		    // Нет покрасочных клеток — нечего делать
-		    if (!hasPaintable) return;
-
-		    // При желании — требуем совпадение с выбранным цветом
-		    if (mustMatchSelectedColor && foundColor != selectedColorIndex)
-		        return;
-
-		    // ===== 3) Вторая проходка: красим все клетки с этой цифрой =====
-		    for (int y = yMin; y <= yMax; y++)
-		    {
-		        for (int x = xMin; x <= xMax; x++)
-		        {
-		            if (ActivePictureInfo.ColorNumbers[y][x] == foundColor)
-		            {
-		                // Передаю startScreen, если в ColorCell важна экранная позиция источника
-		                ColorCell(x, y, selectedColorIndex, startScreen);
-		            }
-		        }
-		    }
-
-		    // после массовой покраски — одноразовые обновления
-		    SetSelectedPowerUp(PowerUp.None);
-		    colorPaletteList.UpdateCompleted();
-		    CheckCompleted();
+			if (unlockedRegions.Count < 8)
+			{
+				unlockedRegions.Add(unlockedRegions.Count);
+				UpdateRegionOverlayTexture();
+			}
 		}
 		
-				
 				
 		/// РАЗУКРАШИВАЕТ КВАДРАТ В УКАЗАННОЙ ПОЗИЦИИ, ПОЛУЧЕННОЙ С АРГУМЕНТА ИВЕНТА
 		private void ColorPixel(Vector2 screenPosition)
@@ -1543,6 +1467,7 @@ namespace BBG.ColorByNumbers
 
 			return json;
 		}
+		
 		protected override void LoadSaveData(bool exists, JSONNode saveData)
 		{
 			Dictionary<string, JSONNode>	savedPictureInfos		= new Dictionary<string, JSONNode>();

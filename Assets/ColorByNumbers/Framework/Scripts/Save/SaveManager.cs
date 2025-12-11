@@ -147,9 +147,10 @@ namespace BBG
 
 				try
 				{
+					
 					Dictionary<string, object>	saveData		= saveable.Save();
 					string						saveFilePath	= GetSaveFilePath(saveable.SaveId);
-
+					
 					string fileContents = Utilities.ConvertToJsonString(saveData);
 
 					if (enableEncryption)

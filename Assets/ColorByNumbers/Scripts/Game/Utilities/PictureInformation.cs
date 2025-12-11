@@ -155,9 +155,9 @@ namespace BBG.ColorByNumbers
 		{
 			get
 			{
-				if (!isFileLoaded)
+				if (currentPaintAmount == null)
 				{
-					LoadPictureFile();
+					InitProgress();
 				}
 
 				return currentPaintAmount;
@@ -628,7 +628,7 @@ namespace BBG.ColorByNumbers
 
 					if (!ParseInt(lines[i], j, out number))
 					{
-						Debug.LogWarning(lines[i][0]);
+						//Debug.LogWarning(lines[i][0]);
 						Debug.LogError("[PictureInformation] ParsePictureFile: Malformed file contents, could not parse color number.");
 
 						return;

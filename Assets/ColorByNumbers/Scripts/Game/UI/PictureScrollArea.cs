@@ -337,7 +337,7 @@ namespace BBG.ColorByNumbers
 			}
 			else
 			{
-				Debug.LogWarning(startPosition + " " + endPosition);
+				//Debug.LogWarning(startPosition + " " + endPosition);
 			}
 			
 			HandlePointerUp(data.pointerId, data.position);
