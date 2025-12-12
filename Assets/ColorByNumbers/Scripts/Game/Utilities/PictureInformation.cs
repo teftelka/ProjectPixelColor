@@ -360,7 +360,7 @@ namespace BBG.ColorByNumbers
 			return false;
 		}
 
-		public Dictionary<string, object> GetSaveData()
+		public Dictionary<string, object> GetSaveData(List<int> regions)
 		{
 			Dictionary<string, object> saveData = new Dictionary<string, object>();
 
@@ -371,6 +371,7 @@ namespace BBG.ColorByNumbers
 				saveData["progress"]	= Progress;
 				saveData["colors_left"]	= ColorsLeft;
 				saveData["paint_amount"]	= CurrentPaintAmount;
+				saveData["unlocked_regions"]	= regions;
 			}
 
 			saveData["id"]			= Id;

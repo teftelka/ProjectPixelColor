@@ -153,7 +153,7 @@ namespace BBG.ColorByNumbers
 		private Transform			magnifyingGlassGridLineContainer;
 		private List<RectTransform>	magnifyingGlassGridLines;
 		
-		private HashSet<int> unlockedRegions = new HashSet<int>();
+		private List<int> unlockedRegions = new List<int>();
 
 // оверлей, который будет закрывать недоступные регионы
 		private RawImage regionOverlayImage;
@@ -273,6 +273,7 @@ namespace BBG.ColorByNumbers
 							break;
 						case "restart":
 							pictureInfo.ClearProgress();
+							unlockedRegions = new List<int> { 0 };
 							OnPictureItemClicked(pictureInfo);
 							break;
 						case "delete":
@@ -312,11 +313,12 @@ namespace BBG.ColorByNumbers
 			if (!PlayedPictureInfos.Contains(pictureInfo))
 			{
 				PlayedPictureInfos.Insert(0, pictureInfo);
+				unlockedRegions = new List<int> { 0 };
 			}
 
 			// Set the active level
 			ActivePictureInfo = pictureInfo;
-			unlockedRegions = new HashSet<int> { 0 };
+			
 
 			// Setup the game
 			SetupLevel(pictureInfo);
@@ -1459,7 +1461,7 @@ namespace BBG.ColorByNumbers
 
 			for (int i = 0; i < PlayedPictureInfos.Count; i++)
 			{
-				pictureInfosJson.Add(PlayedPictureInfos[i].GetSaveData());
+				pictureInfosJson.Add(PlayedPictureInfos[i].GetSaveData(unlockedRegions));
 			}
 
 			json["picture_infos"]	= pictureInfosJson;
@@ -1488,6 +1490,12 @@ namespace BBG.ColorByNumbers
 					pictureInfoLoadOrder.Add(id);
 
 					savedPictureInfos[id] = pictureInfoJson;
+				}
+				
+				JSONNode regions = pictureInfosJson[0]["unlocked_regions"];
+				foreach (JSONNode node in regions.AsArray)
+				{
+					unlockedRegions.Add(node.AsInt);
 				}
 
 				CurrencyAmount = json["currency_amount"].AsInt;
