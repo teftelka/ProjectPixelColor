@@ -273,7 +273,7 @@ namespace BBG.ColorByNumbers
 							break;
 						case "restart":
 							pictureInfo.ClearProgress();
-							unlockedRegions = new List<int> { 0 };
+							//unlockedRegions = new List<int> { 0 };
 							OnPictureItemClicked(pictureInfo);
 							break;
 						case "delete":
@@ -313,7 +313,7 @@ namespace BBG.ColorByNumbers
 			if (!PlayedPictureInfos.Contains(pictureInfo))
 			{
 				PlayedPictureInfos.Insert(0, pictureInfo);
-				unlockedRegions = new List<int> { 0 };
+				//unlockedRegions = new List<int> { 0 };
 			}
 
 			// Set the active level
@@ -502,7 +502,7 @@ namespace BBG.ColorByNumbers
 
 					int regionId = ActivePictureInfo.RegionIds[y][x];
 
-					bool isUnlocked = regionId >= 0 && unlockedRegions.Contains(regionId);
+					bool isUnlocked = regionId >= 0 && ActivePictureInfo.UnlockedRegions.Contains(regionId);
 
 					if (isUnlocked)
 					{
@@ -827,7 +827,7 @@ namespace BBG.ColorByNumbers
 				return false;
 
 			int regionId = ActivePictureInfo.RegionIds[yCell][xCell];
-			return regionId >= 0 && unlockedRegions.Contains(regionId);
+			return regionId >= 0 && ActivePictureInfo.UnlockedRegions.Contains(regionId);
 		}
 		
 
@@ -1085,9 +1085,9 @@ namespace BBG.ColorByNumbers
 
 		public void OnButtonOpenAreaClick()
 		{
-			if (unlockedRegions.Count < 8)
+			if (ActivePictureInfo.UnlockedRegions.Count < ActivePictureInfo.RegionIds.Count)
 			{
-				unlockedRegions.Add(unlockedRegions.Count);
+				ActivePictureInfo.UnlockedRegions.Add(ActivePictureInfo.UnlockedRegions.Count);
 				UpdateRegionOverlayTexture();
 			}
 		}
@@ -1461,7 +1461,7 @@ namespace BBG.ColorByNumbers
 
 			for (int i = 0; i < PlayedPictureInfos.Count; i++)
 			{
-				pictureInfosJson.Add(PlayedPictureInfos[i].GetSaveData(unlockedRegions));
+				pictureInfosJson.Add(PlayedPictureInfos[i].GetSaveData());
 			}
 
 			json["picture_infos"]	= pictureInfosJson;
@@ -1492,11 +1492,11 @@ namespace BBG.ColorByNumbers
 					savedPictureInfos[id] = pictureInfoJson;
 				}
 				
-				JSONNode regions = pictureInfosJson[0]["unlocked_regions"];
+				/*JSONNode regions = pictureInfosJson[0]["unlocked_regions"];
 				foreach (JSONNode node in regions.AsArray)
 				{
 					unlockedRegions.Add(node.AsInt);
-				}
+				}*/
 
 				CurrencyAmount = json["currency_amount"].AsInt;
 			}

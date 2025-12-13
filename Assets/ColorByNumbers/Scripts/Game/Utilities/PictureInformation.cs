@@ -25,6 +25,8 @@ namespace BBG.ColorByNumbers
 		private bool			awardOnComplete;
 		private int				awardAmount;
 		private List<List<int>> regionIds;
+
+		private List<int> unlockedRegions;
 		//private int colorsCount;
 
 		// Saved matrix of color numbers, -1 means it's colored in, number >= 0 means it still needs to be colored
@@ -161,6 +163,19 @@ namespace BBG.ColorByNumbers
 				}
 
 				return currentPaintAmount;
+			}
+		}
+		
+		public List<int> UnlockedRegions
+		{
+			get
+			{
+				if (unlockedRegions == null)
+				{
+					InitProgress();
+				}
+
+				return unlockedRegions;
 			}
 		}
 
@@ -323,6 +338,7 @@ namespace BBG.ColorByNumbers
 			colorsLeft		= null;
 			currentPaintAmount	= null;
 			ReloadGrayscale	= true;
+			unlockedRegions	= null;
 		}
 
 		/// <summary>
@@ -360,7 +376,7 @@ namespace BBG.ColorByNumbers
 			return false;
 		}
 
-		public Dictionary<string, object> GetSaveData(List<int> regions)
+		public Dictionary<string, object> GetSaveData()
 		{
 			Dictionary<string, object> saveData = new Dictionary<string, object>();
 
@@ -371,7 +387,7 @@ namespace BBG.ColorByNumbers
 				saveData["progress"]	= Progress;
 				saveData["colors_left"]	= ColorsLeft;
 				saveData["paint_amount"]	= CurrentPaintAmount;
-				saveData["unlocked_regions"]	= regions;
+				saveData["unlocked_regions"]	= UnlockedRegions;
 			}
 
 			saveData["id"]			= Id;
@@ -388,6 +404,7 @@ namespace BBG.ColorByNumbers
 				progress	= new List<List<int>>();
 				colorsLeft	= new List<int>();
 				currentPaintAmount = new List<int>();
+				unlockedRegions = new List<int>();
 
 				foreach (JSONArray list in saveData["progress"].AsArray)
 				{
@@ -410,6 +427,11 @@ namespace BBG.ColorByNumbers
 				{
 					currentPaintAmount.Add(paint.AsInt);
 				}
+				
+				foreach (JSONNode node in saveData["unlocked_regions"].AsArray)
+				{
+					unlockedRegions.Add(node.AsInt);
+				}
 			}
 
 			completed	= saveData["completed"].AsBool;
@@ -427,9 +449,8 @@ namespace BBG.ColorByNumbers
 			progress	= new List<List<int>>();
 			colorsLeft	= new List<int>();
 			currentPaintAmount = new List<int>();
-
-			//currentPaintAmount = startPaintAmount;
-
+			unlockedRegions = new List<int> { 0 };
+			
 			// ДЕЛАЕТ СПИСОК НУЛЕЙ В КОЛИЧЕСТВЕ РАВНОМ КОЛИЧЕСИВУ ЦВЕТОВ. ПОЧЕМУ НЕ ПРОСТО ХРАНИТЬ КОЛИЧЕСТВО????
 			//ВЫГЛЯДИТ ТАК - (0,0,0,0,0,0,0,0,0)
 			for (int i = 0; i < colors.Count; i++)
@@ -567,8 +588,7 @@ namespace BBG.ColorByNumbers
 
 			index += yCells;
 
-			//var colorsCount = Convert.ToInt32(lines[index][0]);
-			var colorsCount = 11;
+			var colorsCount = Convert.ToInt32(lines[index][0]);
 
 			index++;
 			
@@ -639,8 +659,6 @@ namespace BBG.ColorByNumbers
 					regionIds[i - index].Add(number);
 				}
 			}
-
-			//GenerateRegions(8);
 			
 			isIdLoaded		= true;
 			isFileLoaded	= true;
