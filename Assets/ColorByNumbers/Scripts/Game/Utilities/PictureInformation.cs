@@ -25,6 +25,7 @@ namespace BBG.ColorByNumbers
 		private bool			awardOnComplete;
 		private int				awardAmount;
 		private List<List<int>> regionIds;
+		private int regionsAmount;
 
 		private List<int> unlockedRegions;
 		//private int colorsCount;
@@ -33,6 +34,7 @@ namespace BBG.ColorByNumbers
 		private List<List<int>>	progress;
 		private List<int>		colorsLeft;
 		private List<int>		currentPaintAmount;
+		private List<List<int>>	colorsAvailable;
 		private bool			unlocked;
 		private bool			completed;
 
@@ -71,6 +73,32 @@ namespace BBG.ColorByNumbers
 				}
 
 				return regionIds;
+			}
+		}
+		
+		public int RegionsAmount
+		{
+			get
+			{
+				if (!isFileLoaded)
+				{
+					LoadPictureFile();
+				}
+
+				return regionsAmount;
+			}
+		}
+		
+		public List<List<int>> ColorsAvailable
+		{
+			get
+			{
+				if (!isFileLoaded)
+				{
+					LoadPictureFile();
+				}
+
+				return colorsAvailable;
 			}
 		}
 
@@ -628,9 +656,21 @@ namespace BBG.ColorByNumbers
 			}
 			
 			index += colorsCount;
+			
+			colorsAvailable = new List<List<int>>();
+			
+			regionsAmount = Convert.ToInt32(lines[index][0]);
+
+			for (int i = 0; i < regionsAmount; i++)
+			{
+				colorsAvailable.Add(new List<int>());
+			}
+
+			index++;
 
 			// Get a list of integers that represent what regions MINE
 			regionIds = new List<List<int>>();
+			
 
 			for (int i = index; i < yCells + index; i++)
 			{
@@ -642,6 +682,7 @@ namespace BBG.ColorByNumbers
 				}
 
 				regionIds.Add(new List<int>());
+				
 
 				for (int j = 0; j < xCells; j++)
 				{
@@ -649,14 +690,36 @@ namespace BBG.ColorByNumbers
 
 					if (!ParseInt(lines[i], j, out number))
 					{
-						//Debug.LogWarning(lines[i][0]);
 						Debug.LogError("[PictureInformation] ParsePictureFile: Malformed file contents, could not parse color number.");
 
 						return;
 					}
-					
 
+					if (number != -1)
+					{
+						if (!colorsAvailable[number].Contains(colorNumbers[i - index][j]))
+						{
+							colorsAvailable[number].Add(colorNumbers[i - index][j]);
+						}
+					}
+					
 					regionIds[i - index].Add(number);
+				}
+			}
+
+
+			List<int> used = new List<int>();
+
+			for (int i = 0; i < colorsAvailable.Count; i++)
+			{
+				if (i > 0)
+				{
+					colorsAvailable[i].RemoveAll(x => used.Contains(x));
+				}
+
+				foreach (int value in colorsAvailable[i])
+				{
+					used.Add(value);
 				}
 			}
 			

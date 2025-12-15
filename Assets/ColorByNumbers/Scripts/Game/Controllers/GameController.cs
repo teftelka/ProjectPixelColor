@@ -1085,10 +1085,11 @@ namespace BBG.ColorByNumbers
 
 		public void OnButtonOpenAreaClick()
 		{
-			if (ActivePictureInfo.UnlockedRegions.Count < ActivePictureInfo.RegionIds.Count)
+			if (ActivePictureInfo.UnlockedRegions.Count < ActivePictureInfo.RegionsAmount)
 			{
 				ActivePictureInfo.UnlockedRegions.Add(ActivePictureInfo.UnlockedRegions.Count);
 				UpdateRegionOverlayTexture();
+				colorPaletteList.SetupPaletteList(ActivePictureInfo);
 			}
 		}
 		

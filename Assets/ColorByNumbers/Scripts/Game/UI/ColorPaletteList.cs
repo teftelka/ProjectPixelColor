@@ -55,7 +55,7 @@ namespace BBG.ColorByNumbers
 			Clear();
 
 			// Add all the color items to the container
-			for (int i = 0; i < pictureInfo.Colors.Count; i++)
+			/*for (int i = 0; i < pictureInfo.Colors.Count; i++)
 			{
 
 				ColorListItem colorListItem	= colorListItemPool.GetObject<ColorListItem>(colorListItemContainer.transform);
@@ -73,6 +73,28 @@ namespace BBG.ColorByNumbers
 				
 
 				colorListItems.Add(colorListItem);
+			}*/
+
+			for (int i = 0; i < pictureInfo.UnlockedRegions.Count; i++)
+			{
+				foreach (var color in pictureInfo.ColorsAvailable[i])
+				{
+					ColorListItem colorListItem	= colorListItemPool.GetObject<ColorListItem>(colorListItemContainer.transform);
+
+					colorListItem.OnColorClicked = OnItemClicked;
+				
+					if (pictureInfo.HasProgress)
+					{
+						colorListItem.Setup(pictureInfo.Colors[color], color, pictureInfo.CurrentPaintAmount[color]);
+					}
+					else
+					{
+						colorListItem.Setup(pictureInfo.Colors[color], color, pictureInfo.StartPaintAmount[color]);
+					}
+				
+					colorListItems.Add(colorListItem);
+				}
+
 			}
 
 			SetColorSelected(0);
