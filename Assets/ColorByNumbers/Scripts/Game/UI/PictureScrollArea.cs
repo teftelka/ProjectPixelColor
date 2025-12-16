@@ -273,8 +273,6 @@ namespace BBG.ColorByNumbers
 		//ЧТО ПРОИСХОДИТ ПРИ НАЖАТИИ КНОПКОЙ МЫШИ
 		public void OnPointerDown(BaseEventData baseData)
 		{
-			
-			
 			//КОГДА МЫ В РЕЖИМЕ РАСКРАШИВАНИЯ
 			if (!enabled)
 			{
@@ -285,7 +283,6 @@ namespace BBG.ColorByNumbers
 			startPosition = data.position;
 			if (selectionBox) selectionBox.gameObject.SetActive(true);
 			UpdateBox(data.position);
-			
 			
 			switch (state)
 			{
@@ -330,18 +327,21 @@ namespace BBG.ColorByNumbers
 
 			const float clickTolerance = 5f;
 
-			if (Vector2.Distance(startPosition, endPosition) > clickTolerance)
+			if (Vector2.Distance(startPosition, endPosition) > clickTolerance && data.button != PointerEventData.InputButton.Right)
 			{
 				// Двигаем мышь дальше порога — значит это выделение
 				SetState(State.Select);
 			}
+
+			if (data.button == PointerEventData.InputButton.Right)
+			{
+				RemovePointer(data.pointerId);
+				SetState(State.None);
+			}
 			else
 			{
-				//Debug.LogWarning(startPosition + " " + endPosition);
+				HandlePointerUp(data.pointerId, data.position);
 			}
-			
-			HandlePointerUp(data.pointerId, data.position);
-			
 		}
 
 		public void OnBeginDrag(BaseEventData baseData)
@@ -390,9 +390,10 @@ namespace BBG.ColorByNumbers
 			}
 
 			PointerEventData data = baseData as PointerEventData;
-			UpdateBox(data.position); 
-			/*if (UpdatePointerPosition(data))
+			
+			if (UpdatePointerPosition(data) && data.button == PointerEventData.InputButton.Right)
 			{
+				Debug.LogWarning(state);
 				switch (state)
 				{
 				case State.Drag:
@@ -418,7 +419,11 @@ namespace BBG.ColorByNumbers
 
 					break;
 				}
-			}*/
+			}
+			else
+			{
+				UpdateBox(data.position); 
+			}
 		}
 
 		#endregion
