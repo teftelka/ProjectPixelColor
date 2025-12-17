@@ -17,7 +17,7 @@ namespace BBG
 
 		#region Properties
 
-		private Button Button { get { return gameObject.GetComponent<Button>(); } }
+		public Button Button { get { return gameObject.GetComponent<Button>(); } }
 
 		#endregion
 

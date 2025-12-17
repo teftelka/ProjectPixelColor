@@ -313,7 +313,6 @@ namespace BBG.ColorByNumbers
 			if (!PlayedPictureInfos.Contains(pictureInfo))
 			{
 				PlayedPictureInfos.Insert(0, pictureInfo);
-				//unlockedRegions = new List<int> { 0 };
 			}
 
 			// Set the active level
@@ -602,6 +601,7 @@ namespace BBG.ColorByNumbers
 			colorPaletteList.SetupPaletteList(pictureInfo);
 
 			SelectColor(0);
+			
 
 			// The color palette could change the size of the layout based on if its 1 row or 2 rows sow we have to wait for the
 			// layout system to set the sizes before we can setup the picture area
@@ -643,12 +643,19 @@ namespace BBG.ColorByNumbers
 
 			SetupGridLines(pictureInfo, contentWidth / pictureInfo.XCells);
 
+			SetOpenAreaButton(pictureInfo);
+			
 			// Setup the magnifying glass
 			if (enableMagnifyingGlass)
 			{
 				magnifyingColorNumbersText.PictureInfo = ActivePictureInfo;
 				SetupMagnifyingGlass(contentWidth, contentHeight);
 			}
+		}
+
+		private void SetOpenAreaButton(PictureInformation pictureInfo)
+		{
+			buttonOpenArea.gameObject.SetActive(pictureInfo.UnlockedRegions.Count < pictureInfo.RegionsAmount);
 		}
 
 		/// <summary>
@@ -1090,6 +1097,12 @@ namespace BBG.ColorByNumbers
 				ActivePictureInfo.UnlockedRegions.Add(ActivePictureInfo.UnlockedRegions.Count);
 				UpdateRegionOverlayTexture();
 				colorPaletteList.SetupPaletteList(ActivePictureInfo);
+			}
+
+			if (ActivePictureInfo.UnlockedRegions.Count == ActivePictureInfo.RegionsAmount 
+			    && buttonOpenArea.isActiveAndEnabled)
+			{
+				buttonOpenArea.gameObject.SetActive(false);
 			}
 		}
 		
