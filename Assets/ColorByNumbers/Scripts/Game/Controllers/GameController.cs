@@ -179,6 +179,13 @@ namespace BBG.ColorByNumbers
 		private Texture2D					SelectionTexture	{ get { return gameTextures[3 + selectedColorIndex]; } }
 
 		private bool isAreaCorrect = true;
+		
+		public struct RegionCenter
+		{
+			public int regionId;
+			public Vector2 localPosition;   // в координатах pictureContentArea
+			public Vector2 cellPosition;    // в координатах сетки (для отладки)
+		}
 
 
 		#endregion
@@ -657,7 +664,69 @@ namespace BBG.ColorByNumbers
 		{
 			buttonOpenArea.gameObject.SetActive(pictureInfo.UnlockedRegions.Count < pictureInfo.RegionsAmount);
 		}
+		
+		private Dictionary<int, RegionCenter> CalculateRegionCenters()
+		{
+			var result = new Dictionary<int, RegionCenter>();
 
+			int width  = ActivePictureInfo.XCells;
+			int height = ActivePictureInfo.YCells;
+
+			// regionId -> (sumX, sumY, count)
+			Dictionary<int, Vector3> accum = new Dictionary<int, Vector3>();
+
+			for (int y = 0; y < height; y++)
+			{
+				for (int x = 0; x < width; x++)
+				{
+					if (ActivePictureInfo.ColorNumbers[y][x] == -1)
+						continue;
+
+					int regionId = ActivePictureInfo.RegionIds[y][x];
+					if (regionId < 0)
+						continue;
+
+					if (!accum.ContainsKey(regionId))
+						accum[regionId] = Vector3.zero;
+
+					// КЛЮЧЕВОЙ МОМЕНТ: инвертируем Y из данных (top-down → bottom-up)
+					int invertedY = (height - 1) - y;
+
+					Vector3 v = accum[regionId];
+					v.x += x;
+					v.y += invertedY;
+					v.z += 1;
+					accum[regionId] = v;
+				}
+			}
+
+			Vector2 contentSize = pictureContentArea.rect.size;
+
+			foreach (var kvp in accum)
+			{
+				int regionId = kvp.Key;
+				Vector3 a = kvp.Value;
+
+				float cx = a.x / a.z;
+				float cy = a.y / a.z;
+
+				// Центр в координатах сетки
+				Vector2 cellCenter = new Vector2(cx + 0.5f, cy + 0.5f);
+
+				// Перевод в локальные координаты pictureContentArea
+				float localX = (cellCenter.x / width)  * contentSize.x - contentSize.x * 0.5f;
+				float localY = (cellCenter.y / height) * contentSize.y - contentSize.y * 0.5f;
+
+				result[regionId] = new RegionCenter
+				{
+					regionId      = regionId,
+					cellPosition  = cellCenter,
+					localPosition = new Vector2(localX, localY)
+				};
+			}
+
+			return result;
+		}
 		/// <summary>
 		/// Place the grid lines for the level
 		/// </summary>
@@ -1103,6 +1172,16 @@ namespace BBG.ColorByNumbers
 			    && buttonOpenArea.isActiveAndEnabled)
 			{
 				buttonOpenArea.gameObject.SetActive(false);
+			}
+			
+			
+			var centers = CalculateRegionCenters();
+
+			if (centers.TryGetValue(0, out var center))
+			{
+				// Локальные координаты внутри pictureContentArea
+				Vector2 localPos = center.localPosition;
+				Debug.LogWarning(localPos);
 			}
 		}
 		
