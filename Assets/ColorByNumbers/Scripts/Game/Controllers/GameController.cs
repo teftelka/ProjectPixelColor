@@ -1,9 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System;
 using Coffee.UIExtensions;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using Random = System.Random;
 
@@ -122,7 +120,7 @@ namespace BBG.ColorByNumbers
 		
 		
 		[SerializeField] private GameObject particleSystem;
-		[SerializeField] private Button buttonOpenArea;
+		[SerializeField] private GameObject buttonOpenAreaPrefab;
 
 		#endregion
 
@@ -152,8 +150,6 @@ namespace BBG.ColorByNumbers
 		private ColorNumbersText	magnifyingColorNumbersText;
 		private Transform			magnifyingGlassGridLineContainer;
 		private List<RectTransform>	magnifyingGlassGridLines;
-		
-		private List<int> unlockedRegions = new List<int>();
 
 // оверлей, который будет закрывать недоступные регионы
 		private RawImage regionOverlayImage;
@@ -650,7 +646,7 @@ namespace BBG.ColorByNumbers
 
 			SetupGridLines(pictureInfo, contentWidth / pictureInfo.XCells);
 
-			SetOpenAreaButton(pictureInfo);
+			SetButtonForOpenRegion(pictureInfo.UnlockedRegions.Count);
 			
 			// Setup the magnifying glass
 			if (enableMagnifyingGlass)
@@ -659,20 +655,14 @@ namespace BBG.ColorByNumbers
 				SetupMagnifyingGlass(contentWidth, contentHeight);
 			}
 		}
-
-		private void SetOpenAreaButton(PictureInformation pictureInfo)
-		{
-			buttonOpenArea.gameObject.SetActive(pictureInfo.UnlockedRegions.Count < pictureInfo.RegionsAmount);
-		}
 		
-		private Dictionary<int, RegionCenter> CalculateRegionCenters()
+		private Dictionary<int, RegionCenter> CalculateRegionCenters(bool mirrorY)
 		{
 			var result = new Dictionary<int, RegionCenter>();
 
 			int width  = ActivePictureInfo.XCells;
 			int height = ActivePictureInfo.YCells;
 
-			// regionId -> (sumX, sumY, count)
 			Dictionary<int, Vector3> accum = new Dictionary<int, Vector3>();
 
 			for (int y = 0; y < height; y++)
@@ -689,7 +679,6 @@ namespace BBG.ColorByNumbers
 					if (!accum.ContainsKey(regionId))
 						accum[regionId] = Vector3.zero;
 
-					// КЛЮЧЕВОЙ МОМЕНТ: инвертируем Y из данных (top-down → bottom-up)
 					int invertedY = (height - 1) - y;
 
 					Vector3 v = accum[regionId];
@@ -704,29 +693,32 @@ namespace BBG.ColorByNumbers
 
 			foreach (var kvp in accum)
 			{
-				int regionId = kvp.Key;
-				Vector3 a = kvp.Value;
+				float cx = kvp.Value.x / kvp.Value.z;
+				float cy = kvp.Value.y / kvp.Value.z;
 
-				float cx = a.x / a.z;
-				float cy = a.y / a.z;
-
-				// Центр в координатах сетки
 				Vector2 cellCenter = new Vector2(cx + 0.5f, cy + 0.5f);
 
-				// Перевод в локальные координаты pictureContentArea
 				float localX = (cellCenter.x / width)  * contentSize.x - contentSize.x * 0.5f;
 				float localY = (cellCenter.y / height) * contentSize.y - contentSize.y * 0.5f;
 
-				result[regionId] = new RegionCenter
+				Vector2 localPos = new Vector2(localX, localY);
+
+				if (mirrorY)
+					localPos.y = -localPos.y;
+
+				result[kvp.Key] = new RegionCenter
 				{
-					regionId      = regionId,
-					cellPosition  = cellCenter,
-					localPosition = new Vector2(localX, localY)
+					regionId = kvp.Key,
+					cellPosition = cellCenter,
+					localPosition = localPos
 				};
 			}
 
 			return result;
 		}
+		
+		
+		
 		/// <summary>
 		/// Place the grid lines for the level
 		/// </summary>
@@ -1159,29 +1151,31 @@ namespace BBG.ColorByNumbers
 		    CheckCompleted();
 		}
 
-		public void OnButtonOpenAreaClick()
+		public void OnButtonOpenAreaClick(ScreenOpenAreaButton button)
 		{
 			if (ActivePictureInfo.UnlockedRegions.Count < ActivePictureInfo.RegionsAmount)
 			{
 				ActivePictureInfo.UnlockedRegions.Add(ActivePictureInfo.UnlockedRegions.Count);
 				UpdateRegionOverlayTexture();
 				colorPaletteList.SetupPaletteList(ActivePictureInfo);
-			}
-
-			if (ActivePictureInfo.UnlockedRegions.Count == ActivePictureInfo.RegionsAmount 
-			    && buttonOpenArea.isActiveAndEnabled)
-			{
-				buttonOpenArea.gameObject.SetActive(false);
+				Destroy(button.gameObject);
 			}
 			
-			
-			var centers = CalculateRegionCenters();
+			SetButtonForOpenRegion(ActivePictureInfo.UnlockedRegions.Count);
+		}
 
-			if (centers.TryGetValue(0, out var center))
+		private void SetButtonForOpenRegion(int regionId)
+		{
+			var centers = CalculateRegionCenters(true);
+
+			if (centers.TryGetValue(regionId, out var center))
 			{
 				// Локальные координаты внутри pictureContentArea
 				Vector2 localPos = center.localPosition;
-				Debug.LogWarning(localPos);
+				
+				GameObject go = Instantiate(buttonOpenAreaPrefab);
+				go.transform.SetParent(pictureContentArea, false);
+				go.transform.localPosition = localPos;
 			}
 		}
 		
@@ -1456,6 +1450,19 @@ namespace BBG.ColorByNumbers
 				}
 
 				gameTextures.Clear();
+			}
+
+			ClearOpenAreaButtons();
+
+		}
+
+		private void ClearOpenAreaButtons()
+		{
+			var screenOpenAreaButtons = pictureScrollArea.GetComponentsInChildren<ScreenOpenAreaButton>();
+
+			foreach (var button in screenOpenAreaButtons)
+			{
+				Destroy(button.gameObject);
 			}
 		}
 

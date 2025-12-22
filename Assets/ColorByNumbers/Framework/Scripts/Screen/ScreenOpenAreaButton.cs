@@ -35,7 +35,7 @@ namespace BBG
 
 		private void OnButtonClicked()
 		{
-			GameController.Instance.OnButtonOpenAreaClick();
+			GameController.Instance.OnButtonOpenAreaClick(this);
 		}
 		
 		

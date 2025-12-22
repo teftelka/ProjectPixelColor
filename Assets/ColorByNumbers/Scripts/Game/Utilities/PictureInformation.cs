@@ -472,7 +472,6 @@ namespace BBG.ColorByNumbers
 			{
 				LoadPictureFile();
 			}
-			
 
 			progress	= new List<List<int>>();
 			colorsLeft	= new List<int>();
