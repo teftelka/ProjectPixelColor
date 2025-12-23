@@ -33,6 +33,8 @@ namespace BBG.ColorByNumbers
 
 		public System.Action<int> OnColorClicked { get; set; }
 
+		public string ColorNumberText => colorNumberText.text;
+
 		#endregion
 
 		#region Public Methods

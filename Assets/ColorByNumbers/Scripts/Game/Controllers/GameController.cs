@@ -808,11 +808,15 @@ namespace BBG.ColorByNumbers
 					if (paintAmount > 0)
 					{
 						ActivePictureInfo.CurrentPaintAmount[colorIndex] -= 1;
-						var b = colorPaletteList.GetComponentsInChildren<ColorListItem>();
-						b[colorIndex].colorCountText.text = ActivePictureInfo.CurrentPaintAmount[colorIndex].ToString();
-						
-						//Debug.LogWarning(ActivePictureInfo.CurrentPaintAmount[colorIndex]);
-						//Debug.LogWarning(ActivePictureInfo.StartPaintAmount[colorIndex]);
+						var colorListItems = colorPaletteList.GetComponentsInChildren<ColorListItem>();
+						foreach (var colorItem in colorListItems)
+						{
+							var b = int.Parse(colorItem.ColorNumberText);
+							if ( b == colorIndex + 1)
+							{
+								colorItem.colorCountText.text = ActivePictureInfo.CurrentPaintAmount[colorIndex].ToString();
+							}
+						}
 					
 						Random random = new Random();
 						int randomNumber = random.Next(0, 5);
